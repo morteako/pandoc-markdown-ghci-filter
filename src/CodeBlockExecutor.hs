@@ -51,11 +51,11 @@ intercalateCmdAndResults cmd result =
 -- | Post-processing function that interleaves command and results
 processResults :: [T.Text] -- ^ List of commands that were executed
                -> [T.Text] -- ^ List of results for the executed commands
-               -> String -- ^ New string that will form the bodyof the modified Code Block.
+               -> T.Text -- ^ New string that will form the bodyof the modified Code Block.
 processResults cmds results =
   let cmd_result = getZipList $ intercalateCmdAndResults <$> ZipList cmds <*> ZipList results
   in
-    (T.unpack . T.concat) $ cmd_result
+    T.concat cmd_result
 
 -- | Apply the filter block only if the language attribute
 -- is set to `haskell` and `code-filter` property is *not* set to "Off"
@@ -84,7 +84,7 @@ runCodeBlock (CodeBlock attr str) = bracket startGhciProcess' stopGhci runComman
       (ghci_handle, _) <- startGhci "stack ghci" (Just ".") (\_ _ -> return ())
       return ghci_handle
     runCommands g = do
-      let cmds = L.filter (\s -> s /= "") $ T.splitOn "\n\n" $ T.pack str
+      let cmds = L.filter (\s -> s /= "") $ T.splitOn "\n\n" str
       results <- mapM (runCmd g) cmds
       let results''' = processResults cmds results
       return (CodeBlock attr results''')

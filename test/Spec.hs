@@ -49,7 +49,7 @@ generateTests = getZipList $ testProcessResults <$> ZipList fixtures <*> ZipList
 testProcessResults :: Show a => ([Text], [Text], String) -> a -> TestTree
 testProcessResults (input, ghci_results, expected) i = testCase ("test_processResults" ++ (show i)) $ do
   let actual = processResults input ghci_results
-  assertEqual "processResult" expected actual
+  assertEqual "processResult" expected (T.unpack actual)
 
 -- test_processResults = testCase "test_processResults" (
 --   assertEqual "input1" combined_result (processResults [input1] [ghci_result]))
