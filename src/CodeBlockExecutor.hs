@@ -21,6 +21,7 @@ import Data.String
 import qualified Data.List as L
 import Data.Map.Strict as M
 import Data.Maybe
+import Debug.Trace
 
 import qualified Data.Text as T
 
@@ -40,13 +41,23 @@ updateSuffixForInteractiveCmd cmd = if isInteractive cmd then
   if T.last cmd == '\n' then "" else "\n"
   else "\n\n"
 
+resultString :: T.Text
+resultString = "--  ==>"
+
+stripPreviousResult :: T.Text -> T.Text
+stripPreviousResult t = case T.splitOn "--  ==>" t of
+  [] -> error ""
+  (x:_) -> x
+
 -- | Intercalate the commands and respective results. Typically, only errors
 -- encountered while running definitions, and outut of interactive commands (
 -- i.e commands prefixed with `>>`) are captured. All empty strins are dropped.
 intercalateCmdAndResults :: T.Text -> T.Text -> T.Text
-intercalateCmdAndResults cmd result =
-  T.concat [cmd, updateSuffixForInteractiveCmd cmd, result, trailResult result] where
-  trailResult r = if r /= "" then "\n" else ""
+intercalateCmdAndResults cmd result
+  | cmd == "" = "\n"
+  | result == "" || not (isInteractive cmd) = T.concat [cmd, updateSuffixForInteractiveCmd cmd]
+  | otherwise = T.concat [stripPreviousResult cmd,  " ", resultString," ", result, updateSuffixForInteractiveCmd cmd]
+  
 
 -- | Post-processing function that interleaves command and results
 processResults :: [T.Text] -- ^ List of commands that were executed
@@ -72,7 +83,7 @@ applyFilterToBlock c@(CodeBlock (_, classes, key_values) _) = let
   code_filter_flag = maybe "On" id (M.lookup ("code-filter") attrs)
   in
     if code_filter_flag == "On" && isJust haskell_in_class then runCodeBlock c
-    else (return c)
+    else return c
 applyFilterToBlock b = return b
 
 -- | Run the commands in the 'Block' in one single GHCid session.
@@ -107,8 +118,4 @@ runCmd g cmd = do
             let prompt = T.replace " \"\\\"PANDOC_FILTER_PROBE_PROMPT_INTERNAL\\\"\"\n" "" (T.pack . unlines $ probe')
             in
               T.concat [T.takeWhile (/='|') prompt, "|"]
-  --putStrLn $ show . unlines $ probe
-  --putStrLn $ show current_prompt
-      result' = T.stripStart $ removeAll current_prompt (T.pack . unlines $ result)
-  --putStrLn $ show result'
-  return $ result'
+  return $ T.stripStart $ removeAll current_prompt (T.pack . unlines $ result)
