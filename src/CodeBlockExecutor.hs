@@ -81,7 +81,7 @@ runCodeBlock:: Block -- ^ 'Block' to execute. Only 'CodeBlock' is executed.
 runCodeBlock (CodeBlock attr str) = bracket startGhciProcess' stopGhci runCommands
   where
     startGhciProcess' = do
-      (ghci_handle, _) <- startGhci "stack ghci" (Just ".") (\_ _ -> return ())
+      (ghci_handle, _) <- startGhci "stack ghci  --ghci-options='-fno-warn-type-defaults'" (Just ".") (\_ _ -> return ())
       return ghci_handle
     runCommands g = do
       let cmds = L.filter (\s -> s /= "") $ T.splitOn "\n\n" str
