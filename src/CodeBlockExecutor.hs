@@ -18,7 +18,7 @@ import Language.Haskell.Ghcid
 import Control.Applicative
 import Control.Exception
 import Data.String
-import Data.List as L
+import qualified Data.List as L
 import Data.Map.Strict as M
 import Data.Maybe
 
